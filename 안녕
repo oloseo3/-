@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <title>동아리 정보 대시보드</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+      body {
+        background-color: #FDF4D2;
+        margin: 0;
+        padding: 16px;
+        color: #4A3B3B;
+      }
+      .container {
+        max-width: 480px;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 24px 20px;
+        border-radius: 16px;
+        box-shadow: 0 6px 16px rgba(148, 109, 109, 0.12);
+        border: 1px solid rgba(176, 205, 230, 0.4);
+      }
+      /* 상단 탭 네비게이션 스타일 */
+      .nav-tabs {
+        display: flex;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #E2D9C2;
+      }
+      .nav-tab {
+        flex: 1;
+        padding: 12px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 15px;
+        color: #8C7878;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+      }
+      .nav-tab.active {
+        color: #946D6D;
+        border-bottom-color: #946D6D;
+        background-color: rgba(253, 244, 210, 0.3);
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+      }
+      .page-section {
+        display: none;
+      }
+      .page-section.active {
+        display: block;
+      }
+      h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 22px;
+        text-align: center;
+        color: #5C4040;
+      }
+      .form-group {
+        margin-bottom: 18px;
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #5C4040;
+      }
+      input[type="text"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 14px;
+        font-size: 16px;
+        border: 1px solid #B0CDE6;
+        border-radius: 8px;
+        background-color: #fafbfc;
+        outline: none;
+        transition: all 0.2s;
+        color: #333;
+      }
+      input[type="text"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #946D6D;
+        background-color: #fff;
+        box-shadow: 0 0 0 3px rgba(176, 205, 230, 0.3);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 90px;
+      }
+      .hidden {
+        display: none;
+      }
+      .mt-2 {
+        margin-top: 8px;
+      }
+      .submit-btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #ffffff;
+        background-color: #946D6D;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 10px;
+        box-shadow: 0 4px 8px rgba(148, 109, 109, 0.3);
+      }
+      .submit-btn:active {
+        background-color: #7A5555;
+      }
+      .loading {
+        display: none;
+        text-align: center;
+        margin-top: 12px;
+        font-size: 14px;
+        color: #946D6D;
+      }
+      /* 검색 결과 카드 스타일 */
+      .result-card {
+        background: #fdfbf7;
+        border: 1px solid #E2D9C2;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      }
+      .result-card h3 {
+        margin: 0 0 6px 0;
+        font-size: 17px;
+        color: #5C4040;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .badge {
+        font-size: 12px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-weight: normal;
+      }
+      .badge.recruiting {
+        background-color: #E2F0D9;
+        color: #385723;
+      }
+      .badge.closed {
+        background-color: #FCE4D6;
+        color: #C65911;
+      }
+      .result-card p {
+        margin: 6px 0;
+        font-size: 14px;
+        color: #665;
+      }
+      .no-result {
+        text-align: center;
+        color: #887;
+        padding: 24px;
+        font-size: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- 상단 탭 메뉴 -->
+      <div class="nav-tabs">
+        <div class="nav-tab active" id="tabRegister" onclick="switchTab('register')">동아리 등록</div>
+        <div class="nav-tab" id="tabSearch" onclick="switchTab('search')">동아리 검색</div>
+      </div>
+
+      <!-- [페이지 1] 동아리 등록 화면 -->
+      <div id="sectionRegister" class="page-section active">
+        <h2>📌 동아리 정보 등록</h2>
+        <form id="clubForm" onsubmit="handleFormSubmit(event)">
+          
+          <div class="form-group">
+            <label for="clubName">동아리 이름</label>
+            <input type="text" id="clubName" placeholder="예: 코딩동아리A" required>
+          </div>
+
+          <div class="form-group">
+            <label for="categorySelect">분야</label>
+            <select id="categorySelect" onchange="handleCategoryChange()" required>
+              <option value="" disabled selected>분야를 선택해주세요</option>
+              <option value="학술·전공">학술·전공</option>
+              <option value="IT·기술">IT·기술</option>
+              <option value="창업·비즈니스">창업·비즈니스</option>
+              <option value="취업·진로">취업·진로</option>
+              <option value="봉사·사회공헌">봉사·사회공헌</option>
+              <option value="문화·예술">문화·예술</option>
+              <option value="음악">음악</option>
+              <option value="체육·스포츠">체육·스포츠</option>
+              <option value="종교">종교</option>
+              <option value="취미·여가">취미·여가</option>
+              <option value="국제·외국어">국제·외국어</option>
+              <option value="직접입력">직접 입력</option>
+            </select>
+            <input type="text" id="categoryCustom" class="hidden mt-2" placeholder="직접 분야를 입력해주세요">
+          </div>
+
+          <div class="form-group">
+            <label for="status">모집상태</label>
+            <select id="status" required>
+              <option value="모집중">모집중</option>
+              <option value="모집종료">모집종료</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="activity">주요활동내용</label>
+            <textarea id="activity" placeholder="동아리의 주요 활동 내용을 적어주세요." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="applyMethod">지원방법</label>
+            <input type="text" id="applyMethod" placeholder="예: 구글폼 접수, 인스타그램 DM" required>
+          </div>
+
+          <button type="submit" class="submit-btn" id="btn">등록하기</button>
+          <div class="loading" id="loadingText">저장 중입니다. 잠시만 기다려 주세요...</div>
+        </form>
+      </div>
+
+      <!-- [페이지 2] 동아리 검색 및 조회 화면 -->
+      <div id="sectionSearch" class="page-section">
+        <h2>🔍 분야별 동아리 검색</h2>
+        
+        <div class="form-group">
+          <label for="searchCategory">조회할 분야 선택</label>
+          <select id="searchCategory" onchange="filterClubs()">
+            <option value="전체">전체 분야 보기</option>
+            <option value="학술·전공">학술·전공</option>
+            <option value="IT·기술">IT·기술</option>
+            <option value="창업·비즈니스">창업·비즈니스</option>
+            <option value="취업·진로">취업·진로</option>
+            <option value="봉사·사회공헌">봉사·사회공헌</option>
+            <option value="문화·예술">문화·예술</option>
+            <option value="음악">음악</option>
+            <option value="체육·스포츠">체육·스포츠</option>
+            <option value="종교">종교</option>
+            <option value="취미·여가">취미·여가</option>
+            <option value="국제·외국어">국제·외국어</option>
+          </select>
+        </div>
+
+        <div id="clubListContainer">
+          <!-- 선택한 분야에 맞는 동아리 카드들이 아래에 렌더링됩니다 -->
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      var allClubs = [];
+
+      // 상단 탭 전환 함수
+      function switchTab(tabName) {
+        var regTab = document.getElementById('tabRegister');
+        var searchTab = document.getElementById('tabSearch');
+        var regSec = document.getElementById('sectionRegister');
+        var searchSec = document.getElementById('sectionSearch');
+
+        if (tabName === 'register') {
+          regTab.classList.add('active');
+          searchTab.classList.remove('active');
+          regSec.classList.add('active');
+          searchSec.classList.remove('active');
+        } else {
+          searchTab.classList.add('active');
+          regTab.classList.remove('active');
+          searchSec.classList.add('active');
+          regSec.classList.remove('active');
+          
+          // 검색 탭을 누를 때 시트 데이터를 최신으로 불러옴
+          loadClubsData();
+        }
+      }
+
+      // 분야 '직접 입력' 선택 시 인풋창 토글
+      function handleCategoryChange() {
+        var select = document.getElementById('categorySelect');
+        var customInput = document.getElementById('categoryCustom');
+        
+        if (select.value === '직접입력') {
+          customInput.classList.remove('hidden');
+          customInput.required = true;
+          customInput.focus();
+        } else {
+          customInput.classList.add('hidden');
+          customInput.required = false;
+          customInput.value = '';
+        }
+      }
+
+      // 폼 제출 처리
+      function handleFormSubmit(event) {
+        event.preventDefault();
+
+        var btn = document.getElementById('btn');
+        var loadingText = document.getElementById('loadingText');
+
+        var selectVal = document.getElementById('categorySelect').value;
+        var finalCategory = selectVal === '직접입력' ? document.getElementById('categoryCustom').value : selectVal;
+
+        btn.disabled = true;
+        btn.style.backgroundColor = '#b8a0a0';
+        loadingText.style.display = 'block';
+
+        var formData = {
+          clubName: document.getElementById('clubName').value,
+          category: finalCategory,
+          status: document.getElementById('status').value,
+          activity: document.getElementById('activity').value,
+          applyMethod: document.getElementById('applyMethod').value
+        };
+
+        google.script.run
+          .withSuccessHandler(function(response) {
+            alert('성공적으로 등록되었습니다!');
+            document.getElementById('clubForm').reset();
+            document.getElementById('categoryCustom').classList.add('hidden');
+            
+            btn.disabled = false;
+            btn.style.backgroundColor = '#946D6D';
+            loadingText.style.display = 'none';
+          })
+          .withFailureHandler(function(error) {
+            alert('저장 중 오류가 발생했습니다: ' + error.message);
+            btn.disabled = false;
+            btn.style.backgroundColor = '#946D6D';
+            loadingText.style.display = 'none';
+          })
+          .saveData(formData);
+      }
+
+      // 서버에서 동아리 목록 불러오기
+      function loadClubsData() {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            allClubs = data;
+            filterClubs(); // 불러온 후 현재 선택된 분야 기준으로 필터 적용
+          })
+          .getClubs();
+      }
+
+      // 선택한 분야에 맞게 하단에 동아리 카드 띄우기
+      function filterClubs() {
+        var selectedCategory = document.getElementById('searchCategory').value;
+        var container = document.getElementById('clubListContainer');
+        
+        var filtered = allClubs.filter(function(club) {
+          if (selectedCategory === '전체') return true;
+          return club.category === selectedCategory;
+        });
+
+        if (filtered.length === 0) {
+          container.innerHTML = '<div class="no-result">해당 분야에 등록된 동아리가 없습니다.</div>';
+          return;
+        }
+
+        var html = '';
+        for (var i = 0; i < filtered.length; i++) {
+          var c = filtered[i];
+          var badgeClass = c.status === '모집중' ? 'recruiting' : 'closed';
+          
+          html += '<div class="result-card">';
+          html += '<h3>' + escapeHtml(c.clubName) + ' <span class="badge ' + badgeClass + '">' + escapeHtml(c.status) + '</span></h3>';
+          html += '<p><strong>분야:</strong> ' + escapeHtml(c.category) + '</p>';
+          html += '<p><strong>활동내용:</strong> ' + escapeHtml(c.activity) + '</p>';
+          html += '<p><strong>지원방법:</strong> ' + escapeHtml(c.applyMethod) + '</p>';
+          html += '</div>';
+        }
+        container.innerHTML = html;
+      }
+
+      // 특수문자 안전 처리 함수
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      }
+    </script>
+  </body>
+</html>
